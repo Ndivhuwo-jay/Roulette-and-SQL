@@ -1,0 +1,44 @@
+USE [Northwind]
+GO
+
+/****** Object:  StoredProcedure [dbo].[pr_GetOrderSummary]    Script Date: 2022/11/20 14:44:24 ******/
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+CREATE procedure [dbo].[pr_GetOrderSummary]
+
+ @StartDate  as Datetime ,
+ @EndDate   as Datetime, 
+ @EmployeeID  as int , 
+ @CustomerID  as nchar (5)  
+
+
+as
+select
+(e.TitleOfCourtesy+''+e.FirstName+''+e.LastName) as'EmployeeFullName',
+s.CompanyName as 'Shipper CompanyName',
+c.CompanyName as 'Customer CompanyName',
+ count (o.OrderID) as 'NumberOfOders',
+ o.OrderDate as 'Date',
+ sum (o.Freight) as 'TotalFreightCost',
+ count (p.ProductID) as 'NumberOfDifferentProducts',
+ sum(((p.UnitPrice*p.Quantity)-((p.UnitPrice*p.Quantity)*p.Discount))) as 'TotalOrderValue'
+
+from Orders o
+left join Employees e on e.EmployeeID=o.EmployeeID
+left join Customers c on c.CustomerID=o.CustomerID
+left join [Order Details] p on p.OrderID=o.OrderID
+left join Shippers s on s.ShipperID=o.ShipVia 
+
+
+
+where o.OrderDate between @StartDate and  @EndDate or e.EmployeeID=@EmployeeID or c.CustomerID=@CustomerID
+
+
+
+Group by o.OrderDate,e.FirstName,c.CompanyName,s.CompanyName,e.LastName,e.TitleOfCourtesy
+GO
+
